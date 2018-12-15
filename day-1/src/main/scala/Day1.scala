@@ -22,7 +22,7 @@ object Day1 {
     operator match {
       case '+' => total + number
       case '-' => total - number
-      case other => throw new IllegalArgumentException(s"expected + or - but found $other")
+      case other => throw new Exception(s"expected + or - but found $other")
     }
   }
 
