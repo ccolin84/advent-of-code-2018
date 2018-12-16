@@ -24,7 +24,7 @@ object Day2 {
     }
   }
 
-  def getMetricsFromBoxId(line: String): Tuple3[Boolean, Boolean, String] = {
+  def getMetricsFromBoxId(line: String): Tuple2[Boolean, Boolean] = {
     var charCounts = Map[Char, Int]()
     var twoOfAChar = Set[Char]()
     var threeOfAChar = Set[Char]()
@@ -40,14 +40,14 @@ object Day2 {
           twoOfAChar -= char
         }
       })
-    (twoOfAChar.nonEmpty, threeOfAChar.nonEmpty, line)
+    (twoOfAChar.nonEmpty, threeOfAChar.nonEmpty)
   }
 
   def getValidBoxIds(inputFile: String): Tuple2[Set[String], Set[String]] = {
     var twoMatchingCharsBoxIds = Set[String]()
     var threeMatchingCharsBoxIds = Set[String]()
-    foreachInputFileLine(inputFile, line => {
-      var (twoCount, threeCount, boxId) = getMetricsFromBoxId(line)
+    foreachInputFileLine(inputFile, boxId => {
+      var (twoCount, threeCount) = getMetricsFromBoxId(boxId)
       if (twoCount) twoMatchingCharsBoxIds += boxId
       if (threeCount) threeMatchingCharsBoxIds += boxId
       true
@@ -72,9 +72,8 @@ object Day2 {
 
   def getMatchingLettersForCorrectBoxes(inputFile: String): String = {
     var (twoMatchingChars, threeMatchingChars) = getValidBoxIds(inputFile)
-    var validBoxes = twoMatchingChars | threeMatchingChars
+    var validBoxIds = (twoMatchingChars | threeMatchingChars).toList
     var matchingChars: Option[String] = None
-    var validBoxIds = validBoxes.toList
 
     validBoxIds
       .zipWithIndex
