@@ -4,18 +4,28 @@ object Day3 {
   def main(argv: Array[String]) = {
     val inputFile = "src/input.txt"
     val inputParser = new Day3InputParser(inputFile)
-    val squaresWithAtLeastTwoClaims = getSquaresWithAtLeastTwoClaims(inputParser)
-    println(s"squares with at least two claims: $squaresWithAtLeastTwoClaims")
+    val populatedFabricSheetGrid = getPopulatedFabricSheetGrid(inputParser)
+    val squaresWithAtLeastTwoClaims = getSquaresWithAtLeastTwoClaims(populatedFabricSheetGrid)
+    println(s"Squares with at least two claims: $squaresWithAtLeastTwoClaims")
+    val idsWithNoOverlappingClaim = getIdsWithNoOverlappingClaim(populatedFabricSheetGrid)
+    println(s"Ids with no overlapping claim: $idsWithNoOverlappingClaim")
   }
 
-  def getSquaresWithAtLeastTwoClaims(inputParser: Day3InputParser): Int = {
+  def getSquaresWithAtLeastTwoClaims(populatedFabricSheetGrid: FabricSheetGrid): Int = {
+    populatedFabricSheetGrid.getNumberOfCoordinatesWithAtLeastTwoClaims
+  }
+
+  def getIdsWithNoOverlappingClaim(populatedFabricSheetGrid: FabricSheetGrid): List[Int] = {
+    populatedFabricSheetGrid.getIdsWithNoOverlappingClaim 
+  }
+
+  def getPopulatedFabricSheetGrid(inputParser: Day3InputParser): FabricSheetGrid = {
     inputParser
       .getClaims
       .foldRight(new FabricSheetGrid())((claim, fabricSheet) => {
-        fabricSheet.addSquare(claim.square)
+        fabricSheet.addClaim(claim)
         fabricSheet
       })
-      .getNumberOfCoordinatesWithAtLeastTwoClaims
   }
 }
 
@@ -70,34 +80,55 @@ case class Square(
 case class Claim(id: Types.ClaimId, square: Square)
 
 class FabricSheetGrid {
-  var coordinateToClaimCount = Map[Coordinate, Int]()
+  var coordinateToClaimCount = Map[Coordinate, List[Int]]()
 
-  def addCoordinate(coordinate: Coordinate) = {
-    var currentClaimCount = coordinateToClaimCount.getOrElse(coordinate, 0)
-    coordinateToClaimCount += (coordinate -> (currentClaimCount + 1))
+  def addCoordinate(coordinate: Coordinate, id: Int) = {
+    var currentClaimCount = coordinateToClaimCount.getOrElse(coordinate, List[Int]())
+    coordinateToClaimCount += (coordinate -> (id :: currentClaimCount))
   }
 
   /** Adds each coordinate in the square
    *  (increasing Y values go down)
    */
-  def addSquare(square: Square) = {
+  def addClaim(claim: Claim) = {
+    val Claim(id, square) = claim
     (square.fromTop + 1)
       .to(square.height + square.fromTop)
       .foreach(yInx => {
         (square.fromLeft + 1)
           .to(square.width + square.fromLeft)
-          .foreach(xInx => addCoordinate(Coordinate(xInx, yInx)))
+          .foreach(xInx => addCoordinate(Coordinate(xInx, yInx), id))
       })
   }
 
-  def getCoordinatesWithAtLeastTwoClaims(): Map[Coordinate, Int] = {
+  def getCoordinatesWithAtLeastTwoClaims(): Map[Coordinate, List[Int]] = {
     coordinateToClaimCount.filter({
-      case (k, v) => v >= 2
+      case (k, v) => v.size >= 2
+    })
+  }
+
+  def getCoordinatesWithOneClaim(): Map[Coordinate, List[Int]] = {
+    coordinateToClaimCount.filter({
+      case (k, v) => v.size == 1
     })
   }
 
   def getNumberOfCoordinatesWithAtLeastTwoClaims(): Int = {
     getCoordinatesWithAtLeastTwoClaims.size
+  }
+
+  def getIdsWithNoOverlappingClaim(): List[Int] = {
+    val coordsWithTwoOrMoreClaims = getCoordinatesWithAtLeastTwoClaims()
+    val coordsWithOneClaim = getCoordinatesWithOneClaim()
+    val idsFromCoordsWithTwoOrMoreClaims = coordsWithTwoOrMoreClaims
+      .foldRight(Set[Int]())((coordToIds, acc) => {
+        acc | coordToIds._2.toSet
+      })
+    val idsFromCoordsWithOneClaim = coordsWithOneClaim
+      .foldRight(Set[Int]())((coordToIds, acc) => {
+        acc | coordToIds._2.toSet
+      })
+    (idsFromCoordsWithOneClaim &~ idsFromCoordsWithTwoOrMoreClaims).toList
   }
 }
 
