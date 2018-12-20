@@ -31,6 +31,11 @@ class Timestamp(
     }
   }
 
+  // assumes the pastTimestamp can't be more than a day older 
+  def getMinuteDiff(pastTimestamp: Timestamp): Int = {
+    minute - pastTimestamp.minute
+  }
+
   override def toString(): String = {
     s"$year-$month-$day $hour:$minute"
   }

@@ -3,13 +3,14 @@ package day4
 object Day4 {
   def main(argv: Array[String]) = {
     val inputFile = "input.txt" 
-    val inputParser = new Day4InputParser(inputFile)
-    val sortedLogs = inputParser.getSortedInput
-    val guardsToMinutesAsleep = getGuardsToMinutesAsleep(sortedLogs)
-    println(guardsToMinutesAsleep)
-    // println(s"Gaurd that sleeps the most: $guardWithMostMinutesAsleep")
-    // println(s"Minute he is most asleep: $minuteMostAsleep")
-    // println(s"Checksum: $checksum")
+    val sortedLogs = (new Day4InputParser(inputFile)).getSortedInput
+    val guardMetricAggregator = new GuardMetricAggregator(sortedLogs)
+    val guardMostAsleep = guardMetricAggregator.getGuardWithMostTimeAsleep
+    val minuteMostAsleep = guardMetricAggregator.getMinuteGuardIsMostAsleep(guardMostAsleep)
+    val checksum = guardMostAsleep * minuteMostAsleep
+    println(s"Gaurd that sleeps the most: $guardMostAsleep")
+    println(s"Minute he is most asleep: $minuteMostAsleep")
+    println(s"Checksum: $checksum")
   }
 }
 
