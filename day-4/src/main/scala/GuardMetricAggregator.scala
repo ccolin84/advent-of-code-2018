@@ -6,14 +6,24 @@ case class TimestampToNapAccumulator(fallAsleepTime: Option[Timestamp], naps: Li
 
 class GuardMetricAggregator(val sortedLogs: Seq[LogEntry]) {
   def getMinuteGuardIsMostAsleep(guardId: Int): Int = {
-    val guardNaps = getGuardIdToNaps.get(guardId)
+    val guardNaps = getGuardIdsToNaps.get(guardId)
     guardNaps match {
-      case Some(naps) => getMinuteMostAsleepFromNaps(naps)
+      case Some(naps) => getMinuteMostAsleepFromNaps(naps)._2
       case None => throw new Exception("This Guard Didn't Nap!")
     }
   }
 
-  def getMinuteMostAsleepFromNaps(naps: List[GuardNap]): Int = {
+  def getMostAsleepMinuteByAnyGuard(): (Int, (Int, Int)) = {
+    getGuardIdsToNaps
+      .map({
+        case (id, naps) => (id, getMinuteMostAsleepFromNaps(naps))
+      })
+      .reduceLeft((acc, value) => {
+        if (acc._2._2 > value._2._2) acc else value
+      })
+  }
+
+  def getMinuteMostAsleepFromNaps(naps: List[GuardNap]): (Int, Int) = {
     val minutesAsleep = naps.flatMap(napToMinutesAsleep(_))
     val initialValue: Map[Int, Int] = Map()
     val minuteToCount = minutesAsleep.foldLeft(initialValue)((acc, value) => {
@@ -24,7 +34,7 @@ class GuardMetricAggregator(val sortedLogs: Seq[LogEntry]) {
       entry match {
         case (k, v) => if (v > acc._2) entry else acc
       }
-    })._1
+    })
   }
 
   def napToMinutesAsleep(nap: GuardNap): List[Int] = {
@@ -51,7 +61,7 @@ class GuardMetricAggregator(val sortedLogs: Seq[LogEntry]) {
   }
 
   def getGuardsToTotalTimeAsleep(): Map[Int, Int] = {
-    getGuardIdToNaps.map({
+    getGuardIdsToNaps.map({
       case (k, v) => (k, convertNapsToTotalTimeAsleep(v)) 
     })
   }
@@ -60,7 +70,7 @@ class GuardMetricAggregator(val sortedLogs: Seq[LogEntry]) {
     naps.foldLeft(0)(_ + _.duration)
   }
 
-  def getGuardIdToNaps(): Map[Int, List[GuardNap]] = {
+  def getGuardIdsToNaps(): Map[Int, List[GuardNap]] = {
     getGuardIdToOrderedNapEvents.map({
       case (k, v) => (k, convertTimestampsToNaps(v)) 
     })

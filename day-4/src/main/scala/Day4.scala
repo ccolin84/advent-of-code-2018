@@ -11,6 +11,11 @@ object Day4 {
     println(s"Gaurd that sleeps the most: $guardMostAsleep")
     println(s"Minute he is most asleep: $minuteMostAsleep")
     println(s"Checksum: $checksum")
+    val (guardId, (minute, occurences)) = guardMetricAggregator.getMostAsleepMinuteByAnyGuard
+    val checksum2 = guardId * minute
+    println(s"Guard most asleep: $guardId")
+    println(s"Minute he is most asleep: $minute")
+    println(s"Checksum2: $checksum2")
   }
 }
 
